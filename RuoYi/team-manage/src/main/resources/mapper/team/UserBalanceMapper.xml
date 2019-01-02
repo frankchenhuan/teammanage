@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.web.mapper.UserBalanceMapper">
+    
+    <resultMap type="UserBalance" id="UserBalanceResult">
+        <result property="userId"    column="user_id"    />
+        <result property="balance"    column="balance"    />
+        <result property="amount"    column="amount"    />
+        <result property="userName"    column="user_name"    />
+        <result property="activityCount1"    column="activity_count1"    />
+        <result property="activityCount2"    column="activity_count2"    />
+    </resultMap>
+	
+	<sql id="selectUserBalanceVo">
+        select t1.user_name,t1.user_id,IFNULL(t2.balance,0) balance,activity_count1,activity_count2 from sys_user t1 
+		left join tm_user_balance t2 on t1.user_id=t2.user_id
+    </sql>
+	
+    <select id="selectUserBalanceList" parameterType="UserBalance" resultMap="UserBalanceResult">
+        <include refid="selectUserBalanceVo"/>
+        where t1.del_flag=0  
+            <if test="userId != null and userId.length()>0"> and t1.user_id = #{userId}</if>
+            <if test="userName != null and userName.length()>0"> and t1.user_name = #{userName}</if>
+        order by t2.activity_count2 desc,t2.activity_count1 desc
+    </select>
+    
+    <select id="selectUserBalanceById" parameterType="Long" resultMap="UserBalanceResult">
+        select IFNULL(t1.activity_count1,0) activity_count1,IFNULL(t1.activity_count2,0) activity_count2,IFNULL(t1.amount,0) amount,IFNULL(t1.balance,0) balance,t2.user_id,t2.user_name from sys_user t2
+		LEFT JOIN tm_user_balance t1  on t1.user_id=t2.user_id
+		where t2.user_id = #{userId}
+    </select>
+    
+    <select id="selectRechargeUserList" parameterType="map" resultType="map">
+       select t1.user_name,t1.user_id,IFNULL(t2.balance,0) balance from sys_user t1 
+		inner join tm_user_balance t2 on t1.user_id=t2.user_id
+        <where>  
+            <if test="userId != null "> and t1.user_id = #{userId}</if>
+         </where>
+          order by t2.activity_count2 desc,t2.activity_count1 desc
+    </select>
+        
+    <insert id="insertUserBalance" parameterType="UserBalance">
+        insert into tm_user_balance
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="userId != null  ">user_id,</if>
+			<if test="balance != null  ">balance,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="userId != null  ">#{userId},</if>
+			<if test="balance != null  ">#{balance},</if>
+         </trim>
+    </insert>
+	 
+    <update id="writeOffUserBalance" parameterType="map">
+        update tm_user_balance
+        set balance =balance - #{balance}
+        where user_id in 
+        <foreach item="userid" index="index" collection="userids" open="(" separator="," close=")">
+            #{userid}
+        </foreach>
+    </update>
+    
+    <update id="updateUserBalanceActivityCount1" parameterType="map">
+        update tm_user_balance b,(select u.user_id,count(*) num from tm_activity_user u group by u.user_id) au
+        set activity_count1 =au.num
+        where b.user_id in 
+        <foreach item="userid" index="index" collection="userids" open="(" separator="," close=")">
+            #{userid}
+        </foreach>
+    </update>
+    
+    <update id="updateUserBalanceActivityCount2">
+       update tm_user_balance b LEFT JOIN 
+		(select count(au.user_id) num,au.user_id from tm_activity_user au 
+											inner JOIN (select  x.id from tm_activity x order by x.activity_date DESC LIMIT 0,9) a on au.activity_id=a.id
+											group by au.user_id) c  on b.user_id=c.user_id 
+        set b.activity_count2 =IFNULL(c.num,0)
+    </update>
+    
+    <update id="updateUserBalance" parameterType="UserBalance">
+        update tm_user_balance
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="balance != null  ">balance =balance+ #{balance},</if>
+        </trim>
+        where user_id = #{userId}
+    </update>
+
+	<delete id="deleteUserBalanceById" parameterType="Long">
+        delete from tm_user_balance where user_id = #{userId}
+    </delete>
+	
+    <delete id="deleteUserBalanceByIds" parameterType="String">
+        delete from tm_user_balance where user_id in 
+        <foreach item="userId" collection="array" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+    
+</mapper>

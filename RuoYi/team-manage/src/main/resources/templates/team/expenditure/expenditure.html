@@ -1,0 +1,102 @@
+<!DOCTYPE HTML>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<body class="gray-bg">
+    <div class="container-div">
+		<div class="btn-group-sm hidden-xs" id="toolbar" role="group">
+			<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="team:expenditure:add">
+				<i class="fa fa-plus"></i> 添加
+			</a>
+			<a class="btn btn-primary btn-edit disabled" onclick="$.operate.edit()" shiro:hasPermission="team:expenditure:edit">
+	            <i class="fa fa-edit"></i> 修改
+	        </a>
+			<a class="btn btn-danger btn-del btn-del disabled" onclick="$.operate.removeAll()" shiro:hasPermission="team:expenditure:remove">
+				<i class="fa fa-remove"></i> 删除
+			</a>
+		</div>
+			
+		<div class="col-sm-12 select-table table-striped">
+			<table id="bootstrap-table" data-mobile-responsive="true"></table>
+		</div>
+    </div>
+    <div th:include="include :: footer"></div>
+    <script th:inline="javascript">
+        var editFlag = [[${@permission.hasPermi('team:expenditure:edit')}]];
+        var removeFlag = [[${@permission.hasPermi('team:expenditure:remove')}]];
+        var writeOffFlag=[[${@permission.hasPermi('team:expenditure:writeOff')}]];
+        var prefix = ctx + "team/expenditure";
+        /**添加冲销的函数调用*/
+        $.extend($.operate,{writeOffAmount:function(id) {
+        	var url = "/404.html";
+        	if ($.common.isNotEmpty(id)) {
+        	    url = $.table._option.writeOffAmountUrl.replace("{id}", id);
+        	} else {
+        	    var id = $.common.isEmpty($.table._option.uniqueId) ? $.table.selectFirstColumns() : $.table.selectColumns($.table._option.uniqueId);
+        	    if (id.length == 0) {
+        			$.modal.alertWarning("请至少选择一条记录");
+        			return;
+        		}
+        	    url = $.table._option.writeOffAmountUrl.replace("{id}", id);
+        	}
+        	$.modal.open("冲销" + $.table._option.modalName, url);
+        }});
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                createUrl: prefix + "/add",
+                updateUrl: prefix + "/edit/{id}",
+                removeUrl: prefix + "/remove",
+                writeOffAmountUrl: prefix + "/writeOff/{id}",
+                modalName: "球队支出",
+                columns: [{
+		            checkbox: true
+		        },
+				{
+					field : 'costName', 
+					title : '费用名称' 
+				},
+				{
+					field : 'activityName', 
+					title : '相关活动' 
+				},
+				{
+					field : 'costTypeName', 
+					title : '费用类型ID' 
+				},
+				{
+					field : 'remarks', 
+					title : ' 备注' 
+				},
+				{
+					field : 'costAmount', 
+					title : '费用金额' 
+				},
+				{
+					field : 'expenditureTime', 
+					title : '支出时间' 
+				},
+				{
+					field : 'writeOffAmount', 
+					title : '冲销金额' 
+				},
+		        {
+		            title: '操作',
+		            align: 'left',
+		            formatter: function(value, row, index) {
+		            	var actions = [];
+		            	if(row.isWriteOff=='0'){
+		            		actions.push('<a class="btn btn-success btn-xs ' + writeOffFlag + '" href="#" onclick="$.operate.writeOffAmount(\'' + row.id + '\')"><i class="fa fa-edit"></i>冲销</a> ');
+		            	}
+		            	actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="#" onclick="$.operate.edit(\'' + row.id + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+                        actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="#" onclick="$.operate.remove(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
+						return actions.join('');
+		            }
+		        }]
+            };
+            $.table.init(options);
+        });
+    </script>
+</body>
+</html>

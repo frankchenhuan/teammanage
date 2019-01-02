@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.web.mapper.DataStatisticsMapper">
+    <select id="selectExpenditureRatio" parameterType="map" resultType="map">
+       select ex.cost_type_id cost_id,sum(ex.cost_amount) cost_amount,sd.dict_label cost_name from tm_expenditure ex
+inner join sys_dict_data sd on sd.dict_type='tm_cost_type' and ex.cost_type_id=sd.dict_value
+ group by ex.cost_type_id,sd.dict_label
+    </select>
+    
+    <select id="selectUserAttendance" parameterType="map" resultType="map">
+      select su.user_name ,ub.amount,ub.balance,ub.activity_count1,ub.activity_count2 from tm_user_balance ub
+		inner join sys_user su on ub.user_id=su.user_id
+		where  su.del_flag=0
+		order by ub.activity_count1 DESC LIMIT ${num}
+    </select>
+    
+    <select id="selectUserLatelyAttendance" parameterType="map" resultType="map">
+      select ub.user_id,su.user_name,ub.activity_count2 from tm_user_balance ub
+		INNER JOIN sys_user su on ub.user_id=su.user_id
+ 		order by ub.activity_count2 desc LIMIT ${num}
+    </select>
+    
+    <select id="selectActivityLevel" parameterType="map" resultType="map">
+      select DATE_FORMAT(al.record_date,'%Y') yy,WEEK(al.record_date) wk
+,max(al.record_date) record_date,ROUND(avg(activity_level),1) activity_level 
+from tm_activity_level al 
+      where al.record_date BETWEEN DATE_SUB(SYSDATE(),INTERVAL 750 day) and SYSDATE() 
+			group by  DATE_FORMAT(al.record_date,'%Y'),WEEK(al.record_date) order by DATE_FORMAT(al.record_date,'%Y'),WEEK(al.record_date)
+    </select>
+    
+    <select id="selectUserActivityLevel" parameterType="map" resultType="map">
+      select DATE_FORMAT(al.record_date,'%Y') yy,WEEK(al.record_date) wk
+	,max(al.record_date) record_date,ROUND(avg(activity_level),1) activity_level 
+	from tm_user_activity_level al 
+      where al.record_date BETWEEN DATE_SUB(SYSDATE(),INTERVAL 750 day) and SYSDATE() 
+			and al.user_id=#{user_id}
+			group by  DATE_FORMAT(al.record_date,'%Y'),WEEK(al.record_date),al.user_id order by DATE_FORMAT(al.record_date,'%Y'),WEEK(al.record_date)
+    </select>
+    
+    <select id="selectUserYearExpenditure" parameterType="map" resultType="map">
+      select t.user_id, DATE_FORMAT(t.expenditure_date,'%Y') yy,sum(t.deductions_amount) amount
+		from tm_user_deductions t 
+		where t.user_id=#{user_id} and DATE_FORMAT(t.expenditure_date,'%Y') BETWEEN DATE_FORMAT(SYSDATE(),'%Y')-${year} and DATE_FORMAT(SYSDATE(),'%Y')
+		group by  t.user_id, DATE_FORMAT(t.expenditure_date,'%Y') order by DATE_FORMAT(t.expenditure_date,'%Y')
+    </select>
+    
+    <select id="selectUserExpenditureRatio" parameterType="map" resultType="map">
+       select ud.user_id,ud.cost_type_id,sum(ud.deductions_amount) cost_amount,sd.dict_label cost_name
+		from tm_user_deductions ud
+		inner join sys_dict_data sd on sd.dict_type='tm_cost_type' and ud.cost_type_id=sd.dict_value
+		 where ud.user_id=#{user_id} group by ud.user_id,ud.cost_type_id,sd.dict_label
+    </select>
+    
+    <select id="selectYearExpenditure" parameterType="map" resultType="map">
+     select DATE_FORMAT(ex.expenditure_time,'%Y') yy,sum(ex.cost_amount) amount from tm_expenditure ex 
+	where DATE_FORMAT(ex.expenditure_time,'%Y') BETWEEN DATE_FORMAT(SYSDATE(),'%Y')-${year} and DATE_FORMAT(SYSDATE(),'%Y')
+	group by DATE_FORMAT(ex.expenditure_time,'%Y')
+    </select>
+</mapper>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--360浏览器优先以webkit内核解析-->
+    <title>个人信息</title>
+    <link rel="shortcut icon" href="favicon.ico">
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/font-awesome.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/main/animate.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/main/style.min862f.css}" rel="stylesheet"/>
+</head>
+<body class="gray-bg">
+    <div class="wrapper wrapper-content">
+        <div class="row animated fadeInRight">
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>[[${teaminfo.name}]]</h5>
+                    </div>
+                    <div class="contact-box">
+	                        <div class="col-sm-6">
+	                            <p><i class="fa fa-cny"></i> 收入: [[${teaminfo.income}]]</p>
+	                            <p><i class="fa fa-cny"></i> 支出: [[${teaminfo.expenditure}]]</p>
+	                         </div>
+	                         <div class="col-sm-6">
+	                            <p><i class="fa fa-cny"></i> 余额:[[${teaminfo.income-teaminfo.expenditure}]] </p>
+	                         	<p><i class="fa fa-soccer-ball-o"></i>活动次数:[[${teaminfo.activityCount}]] </p>
+	                        </div>
+	                        <div class="clearfix">
+	                        </div>
+                    </div>
+                </div>
+                <div class="ibox float-e-margins">
+                    <div class="contact-box">
+                    	 <div id="activityLevel" style="width: 550px;height: 250px;"></div>
+                    </div>
+               </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="contact-box">
+                    	 <div id="attendance" style="width: 550px;height: 220px;"></div>
+                    	 <div id="LatelyAttendance" style="width: 550px;height: 220px;"></div>
+                    </div>
+               </div>
+            </div>
+        </div>
+        <div class="row animated fadeInRight">
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>支出占比</h5>
+                    </div>
+                    <div class="contact-box">
+	                        <div  id="cost_radio" style="width: 550px;height: 220px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>年度支出</h5>
+                    </div>
+                    <div class="contact-box">
+	                    	<div  id="yearExpenditure" style="width: 550px;height: 200px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+   
+    
+    <div th:include="include::footer"></div>
+    <div th:include="include::echarts"></div>
+    <script type="text/javascript">
+    var prefix = ctx + "team/teamInfo";
+   	/**球队支出比例的请求**/
+    $.ajax({
+        type:'post',
+        dataType:'json',
+        url:prefix+'/chartData',
+        data: {attendance_topnum:10},
+        success:function(data){
+        	//alert(data);
+        	 if(data!=null)
+        	{
+        			radioChart(data.costRatios);
+        			attendanceChart(data.attendanceData);
+        			latelyAttendanceChart(data.latelyAttendanceData);
+        			activityLevelChart(data.activtiyLevel);
+        			yearExpenditure(data.yearExpenditure);
+        	}
+        	else{
+        		alert("数据读取失败");
+        	} 
+        }
+    });
+  	
+   	/**支出比例图表*/
+   	function radioChart(data)
+   	{
+   		if(data!=null)
+    	{
+    		var legendData = [];
+	        var seriesData = [];
+	        var selected = {};
+    		for(var i=0;i<data.length;i++)
+            {
+    			legendData.push(data[i].cost_name);
+                seriesData.push({
+                    name: data[i].cost_name,
+                    value: data[i].cost_amount
+                });
+                selected[data[i].cost_name] = true;
+            }
+    		//初始化球队支出比例图表
+    		initRadioChart({legendData: legendData,seriesData: seriesData,selected: selected});
+    	}else{
+    		//提示信息
+    	}
+   	}
+    /**初始化球队支出比例图表*/
+    function initRadioChart(data){
+    	//alert(data);
+        var cost_radio = echarts.init(document.getElementById('cost_radio'),'vintage');
+        var option = {
+            title : {
+                text: '球队费用支出占比',
+                subtext: '',
+                x:'center',
+                show:true
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: "{b} : {c} ({d}%)",
+                show:true
+            },
+            //grid:{top:40,left:40,bottom:20},
+            legend: {
+                type: 'scroll',
+                orient: 'vertical',
+                right: 50,
+                top: 20,
+                bottom: 20,
+                data: data.legendData,
+                show:true,
+                selected: data.selected
+            },
+            series : [
+                {
+                    name: '费用类型',
+                    type: 'pie',
+                    radius : '55%',
+                    center: ['40%', '50%'],
+                    data: data.seriesData,
+                    hoverAnimation:true,
+                    label:{
+                		show:true,
+                		formatter: "{b} : {c} ({d}%)"
+                	},
+                    itemStyle: {
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+        };
+        cost_radio.setOption(option);
+    }
+    
+    /**总出勤图表**/
+    function attendanceChart(data)
+    {
+    	if(data!=null)
+    	{
+	    	var userNames = [];
+	        var attendanceData = [];
+			for(var i=0;i<data.length;i++)
+	        {
+				userNames.push(data[i].user_name);
+				attendanceData.push(data[i].activity_count1);
+	        }
+			initAttendanceChart({
+				userNames:userNames,
+				attendanceData:attendanceData
+			});
+    	}else{
+    		//提示信息
+    	}
+    }
+    function initAttendanceChart(data)
+    {
+    	var attendance = echarts.init(document.getElementById('attendance'),'vintage');
+    	option = {
+    			title:{
+    				show:true,
+    				text:'总出勤（TOP10）'
+    			},
+    			tooltip:{
+    				show:true,
+    				trigger:'axis',
+    				axisPointer:{
+    					type:'line'
+    				}
+    			},
+    			grid:{top:40,left:40,bottom:20},
+    		    xAxis: {
+    		        type: 'category',
+    		        data: data.userNames,
+    		        axisLabel:{
+    		        	interval:0,
+    		        	alignWithLabel:true
+    		        }
+    		    },
+    		    yAxis: {
+    		        type: 'value'
+    		    },
+    		    series: [{
+    		        data: data.attendanceData,
+    		        type: 'bar',
+    		        label:{
+    		        	show:true
+    		        }
+    		    }]
+    		};
+    	attendance.setOption(option);
+    }
+    
+    /**最近出勤图表**/
+    function latelyAttendanceChart(data)
+    {
+    	//alert(data);
+    	if(data!=null)
+    	{
+	    	var userNames = [];
+	        var attendanceData = [];
+			for(var i=0;i<data.length;i++)
+	        {
+				userNames.push(data[i].user_name);
+				attendanceData.push(data[i].activity_count2);
+	        }
+			initLatelyAttendanceChart({
+				userNames:userNames,
+				attendanceData:attendanceData
+			});
+    	}else{
+    		//提示信息
+    	}
+    }
+    function initLatelyAttendanceChart(data)
+    {
+    	var attendance = echarts.init(document.getElementById('LatelyAttendance'),'vintage');
+    	option = {
+    			title:{
+    				show:true,
+    				text:'最近出勤（TOP10）'
+    			},
+    			tooltip:{
+    				show:true,
+    				trigger:'axis',
+    				axisPointer:{
+    					type:'line'
+    				}
+    			},
+    			grid:{top:40,left:40,bottom:20},
+    		    xAxis: {
+    		        type: 'category',
+    		        data: data.userNames,
+    		        axisLabel:{
+    		        	interval:0,
+    		        	alignWithLabel:true
+    		        }
+    		    },
+    		    yAxis: {
+    		        type: 'value'
+    		    },
+    		    series: [{
+    		        data: data.attendanceData,
+    		        type: 'bar',
+    		        label:{
+    		        	show:true
+    		        }
+    		    }]
+    		};
+    	attendance.setOption(option);
+    }
+    
+    /**活跃图图表**/
+    function activityLevelChart(data)
+    {
+    	//alert(data);
+    	if(data!=null)
+    	{
+	    	var dates = [];
+	        var levels = [];
+			for(var i=0;i<data.length;i++)
+	        {
+				dates.push(data[i].record_date);
+				levels.push(data[i].activity_level);
+	        }
+			initActivityLevelChart({
+				dates:dates,
+				levels:levels
+			});
+    	}else{
+    		//提示信息
+    	}
+    }
+    function initActivityLevelChart(data)
+    {
+    	var activityLevel = echarts.init(document.getElementById('activityLevel'),'vintage');
+    	option = {
+    		    visualMap: [{
+    		        show: false,
+    		        type: 'continuous',
+    		        seriesIndex: 0,
+    		        min: 0,
+    		        max: 100
+    		    }],
+    		    title: [{
+    		        left: 'center',
+    		        text: '球队活跃度'
+    		    }],
+    		    tooltip: {
+    		        trigger: 'axis'
+    		    },
+    		    xAxis: [{
+    		        data: data.dates
+    		    }],
+    		    yAxis: [{
+    		        splitLine: {show: true}
+    		    }],
+    		    grid: {left:50,right:20,bottom:30,top:25},
+    		    series: [{
+    		        type: 'line',
+    		        showSymbol: false,
+    		        data: data.levels
+    		    }]
+    		};
+    	activityLevel.setOption(option);
+    }
+    
+    /**年支出图表**/
+    function yearExpenditure(data)
+    {
+    	if(data!=null)
+    	{
+	    	var years = [];
+	        var expenditureData = [];
+			for(var i=0;i<data.length;i++)
+	        {
+				years.push(data[i].yy);
+				expenditureData.push(data[i].amount);
+	        }
+			inityearExpenditure({
+				years:years,
+				expenditureData:expenditureData
+			});
+    	}else{
+    		//提示信息
+    	}
+    }
+    function inityearExpenditure(data)
+    {
+    	var yearExpenditure = echarts.init(document.getElementById('yearExpenditure'),'vintage');
+    	option = {
+    			title:{
+    				show:false,
+    				text:'年度费用支出'
+    			},
+    			tooltip:{
+    				show:true,
+    				trigger:'axis',
+    				axisPointer:{
+    					type:'line'
+    				}
+    			},
+    			grid:{top:20,left:40,bottom:20},
+    		    xAxis: {
+    		        type: 'category',
+    		        data: data.years,
+    		        axisLabel:{
+    		        	interval:0,
+    		        	alignWithLabel:true
+    		        }
+    		    },
+    		    yAxis: {
+    		        type: 'value'
+    		    },
+    		    series: [{
+    		        data: data.expenditureData,
+    		        type: 'bar',
+    		        label:{
+    		        	show:true
+    		        }
+    		    }]
+    		};
+    	yearExpenditure.setOption(option);
+    }
+    </script>
+</body>
+</html>

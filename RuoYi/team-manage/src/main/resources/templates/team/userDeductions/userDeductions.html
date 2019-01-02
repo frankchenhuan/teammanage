@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<body class="gray-bg">
+    <div class="container-div">
+		<div class="col-sm-12 select-table table-striped">
+			<table id="bootstrap-table" data-mobile-responsive="true"></table>
+		</div>
+    </div>
+    <div th:include="include :: footer"></div>
+    <script th:inline="javascript">
+        var editFlag = [[${@permission.hasPermi('team:userDeductions:edit')}]];
+        var removeFlag = [[${@permission.hasPermi('team:userDeductions:remove')}]];
+        var prefix = ctx + "team/userDeductions";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                //createUrl: prefix + "/add",
+                //updateUrl: prefix + "/dedutions/{id}",
+                removeUrl: prefix + "/remove",
+                modalName: "用户扣费记录",
+                columns: [{
+		            checkbox: true
+		        },
+				{
+					field : 'id', 
+					title : '扣费记录ID' 
+				},
+				{
+					field : 'userName', 
+					title : '用户名' 
+				},
+				{
+					field : 'deductionsAmount', 
+					title : '扣除金额' 
+				},
+				{
+					field : 'remarks', 
+					title : '备注' 
+				},
+				{
+					field : 'expenditureDate', 
+					title : '支出日期' 
+				},
+		        {
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+		            	var actions = [];
+                        actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="#" onclick="$.operate.remove(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
+						return actions.join('');
+		            }
+		        }]
+            };
+            $.table.init(options);
+        });
+    </script>
+</body>
+</html>

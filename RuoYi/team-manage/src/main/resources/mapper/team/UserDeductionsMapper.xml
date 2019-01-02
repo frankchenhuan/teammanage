@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.web.mapper.UserDeductionsMapper">
+    
+    <resultMap type="UserDeductions" id="UserDeductionsResult">
+        <result property="id"    column="id"    />
+        <result property="deductionsAmount"    column="deductions_amount"    />
+        <result property="remarks"    column="remarks"    />
+        <result property="deductionsTime"    column="deductions_time"    />
+        <result property="userId"    column="user_Id"    />
+        <result property="userName"    column="user_Name"    />
+        <result property="costTypeId"    column="cost_type_id"    />
+        <result property="costName"    column="cost_name"    />
+        <result property="expenditureDate"    column="expenditure_date"    />
+    </resultMap>
+	
+	<sql id="selectUserDeductionsVo">
+        select t2.id, t2.deductions_amount, t2.remarks, t2.deductions_time
+        ,t1.user_id,t1.user_name,t2.expenditure_date,t2.cost_type_id
+         from sys_user t1
+		inner join tm_user_deductions t2 on t1.user_id=t2.user_id
+    </sql>
+	
+    <select id="selectUserDeductionsList" parameterType="UserDeductions" resultMap="UserDeductionsResult">
+        <include refid="selectUserDeductionsVo"/>
+        <where>  
+            <if test="id != null "> and t2.id = #{id}</if>
+             <if test="deductionsAmount != null "> and t2.deductions_amount = #{deductionsAmount}</if>
+             <if test="remarks != null  and remarks != '' "> and t2.remarks = #{remarks}</if>
+             <if test="deductionsTime != null "> and t2.deductions_time = #{deductionsTime}</if>
+              <if test="expenditureDate != null "> and t2.expenditure_date = #{expenditureDate}</if>
+         </where>
+         order by t2.expenditure_date desc
+    </select>
+    
+    <select id="selectUserDeductionsById" parameterType="Long" resultMap="UserDeductionsResult">
+        <include refid="selectUserDeductionsVo"/>
+        where t2.id = #{id}
+    </select>
+        
+    <insert id="insertUserDeductions" parameterType="UserDeductions">
+        insert into tm_user_deductions
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null  ">id,</if>
+			<if test="deductionsAmount != null  ">deductions_amount,</if>
+			<if test="remarks != null  and remarks != ''  ">remarks,</if>
+			<if test="deductionsTime != null  ">deductions_time,</if>
+			<if test="userId != null  ">user_id,</if>
+			<if test="expenditureId != null  ">expenditure_id,</if>
+			<if test="costTypeId != null  ">cost_type_id,</if>
+			<if test="expenditureDate != null  ">expenditure_date,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null  ">#{id},</if>
+			<if test="deductionsAmount != null  ">#{deductionsAmount},</if>
+			<if test="remarks != null  and remarks != ''  ">#{remarks},</if>
+			<if test="deductionsTime != null  ">#{deductionsTime},</if>
+			<if test="userId != null  ">#{userId},</if>
+			<if test="expenditureId != null  ">#{expenditureId},</if>
+			<if test="costTypeId != null  ">#{costTypeId},</if>
+			<if test="expenditureDate != null  ">#{expenditureDate},</if>
+         </trim>
+    </insert>
+	 
+    <update id="updateUserDeductions" parameterType="UserDeductions">
+        update tm_user_deductions
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="deductionsAmount != null  ">deductions_amount = #{deductionsAmount},</if>
+            <if test="remarks != null  and remarks != ''  ">remarks = #{remarks},</if>
+            <if test="deductionsTime != null  ">deductions_time = #{deductionsTime},</if>
+            <if test="expenditureId != null  ">expenditure_id = #{expenditureId},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+	<delete id="deleteUserDeductionsById" parameterType="Long">
+        delete from tm_user_deductions where id = #{id}
+    </delete>
+	
+    <delete id="deleteUserDeductionsByIds" parameterType="String">
+        delete from tm_user_deductions where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    
+</mapper>

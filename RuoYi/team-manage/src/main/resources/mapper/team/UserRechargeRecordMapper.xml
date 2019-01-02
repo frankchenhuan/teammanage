@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.web.mapper.UserRechargeRecordMapper">
+    
+    <resultMap type="UserRechargeRecord" id="UserRechargeRecordResult">
+        <result property="id"    column="id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="rechargeAmount"    column="recharge_amount"    />
+        <result property="rechargeTime"    column="recharge_time"    />
+        <result property="userName"    column="user_name"    />
+        <result property="remark"    column="remark"    />
+        <result property="rechargeType"    column="rechargeType"    />
+    </resultMap>
+	
+	<sql id="selectUserRechargeRecordVo">
+        select id, t1.user_id, t2.recharge_amount, t2.recharge_time,t1.user_name,t2.remark,t2.rechargeType from sys_user t1
+inner join tm_user_recharge_record t2 on t1.user_id=t2.user_id
+    </sql>
+	
+    <select id="selectUserRechargeRecordList" parameterType="UserRechargeRecord" resultMap="UserRechargeRecordResult">
+        <include refid="selectUserRechargeRecordVo"/>
+        <where>  
+            <if test="id != null "> and id = #{id}</if>
+             <if test="userId != null "> and user_id = #{userId}</if>
+             <if test="rechargeAmount != null "> and recharge_amount = #{rechargeAmount}</if>
+             <if test="rechargeTime != null "> and recharge_time = #{rechargeTime}</if>
+         </where>
+         order by recharge_time desc
+    </select>
+    
+    <select id="selectUserRechargeRecordById" parameterType="Long" resultMap="UserRechargeRecordResult">
+        <include refid="selectUserRechargeRecordVo"/>
+        where id = #{id}
+    </select>
+        
+    <insert id="insertUserRechargeRecord" parameterType="UserRechargeRecord">
+        insert into tm_user_recharge_record
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null  ">id,</if>
+			<if test="userId != null  ">user_id,</if>
+			<if test="rechargeAmount != null  ">recharge_amount,</if>
+			<if test="rechargeTime != null  ">recharge_time,</if>
+			<if test="remark != null  ">remark,</if>
+			<if test="rechargeType != null  ">rechargeType,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null  ">#{id},</if>
+			<if test="userId != null  ">#{userId},</if>
+			<if test="rechargeAmount != null  ">#{rechargeAmount},</if>
+			<if test="rechargeTime != null  ">#{rechargeTime},</if>
+			<if test="remark != null  ">#{remark},</if>
+			<if test="rechargeType != null  ">#{rechargeType},</if>
+         </trim>
+    </insert>
+	 
+    <update id="updateUserRechargeRecord" parameterType="UserRechargeRecord">
+        update tm_user_recharge_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null  ">user_id = #{userId},</if>
+            <if test="rechargeAmount != null  ">recharge_amount = #{rechargeAmount},</if>
+            <if test="rechargeTime != null  ">recharge_time = #{rechargeTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+	<delete id="deleteUserRechargeRecordById" parameterType="Long">
+        delete from tm_user_recharge_record where id = #{id}
+    </delete>
+	
+    <delete id="deleteUserRechargeRecordByIds" parameterType="String">
+        delete from tm_user_recharge_record where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    
+</mapper>

@@ -1,0 +1,80 @@
+<!DOCTYPE HTML>
+<html  lang="zh" xmlns:th="http://www.thymeleaf.org">
+<meta charset="utf-8">
+<head th:include="include :: header"></head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <form class="form-horizontal m" id="form-activity-edit" th:object="${activity}">
+            <input id="id" name="id" th:field="*{id}"  type="hidden">
+            <input id="selected_userids" name="selected_userids" th:value="${selected_userids}"  type="hidden">
+            <div class="form-group">	
+                <label class="col-sm-3 control-label">活动名称：</label>
+                <div class="col-sm-8">
+                    <input id="activityName" name="activityName" th:field="*{activityName}" class="form-control" type="text">
+                </div>
+            </div>
+            <div class="form-group">	
+                <label class="col-sm-3 control-label">活动日期：</label>
+                <div class="col-sm-8">
+                    <input id="activityDate" name="activityDate" th:field="*{activityDate}" class="form-control form_datetime" readonly="readonly" type="text">
+                </div>
+            </div>
+            <div class="form-group">	
+                <label class="col-sm-3 control-label">人数：</label>
+                <div class="col-sm-8">
+                   <select multiple="multiple" id="peoples" name="peoples">
+        				<option  th:each="u:${users}" th:value="${u.user_id}" th:text="${u.user_name}"></option>
+    				</select>
+                </div>
+            </div>
+            <div class="form-group">	
+                <label class="col-sm-3 control-label">活动地点：</label>
+                <div class="col-sm-8">
+                    <input id="activitySite" name="activitySite" th:field="*{activitySite}" class="form-control" type="text">
+                </div>
+            </div>
+            <div class="form-group">	
+                <label class="col-sm-3 control-label">备注：</label>
+                <div class="col-sm-8">
+                    <textarea id="remark" name="remark" th:field="*{remark}" class="form-control" type="text"></textarea>
+                </div>
+            </div>
+            
+		</form>
+    </div>
+    <div th:include="include::footer"></div>
+    <script type="text/javascript">
+		var prefix = ctx + "team/activity"
+		$("#form-activity-edit").validate({
+			rules:{
+				xxxx:{
+					required:true,
+				},
+			}
+		});
+		
+		function submitHandler() {
+	        if ($.validate.form()) {
+	            $.operate.save(prefix + "/edit", $('#form-activity-edit').serialize());
+	        }
+	    }
+		$('.form_datetime').datetimepicker({
+			language:  'zh-CN',
+			format: 'yyyy-mm-dd',//显示格式
+			todayHighlight: 1,//今天高亮
+			minView: "month",//设置只显示到月份
+			startView:2,
+			forceParse: 0,
+			showMeridian: 1,
+			autoclose: 1//选择后自动关闭
+			});
+		$('select').multipleSelect({
+			width: 470,
+            multiple: true,
+            multipleWidth: 55
+		});
+		var ids =$("#selected_userids").val();
+		$('select').multipleSelect('setSelects',ids.split(","));
+	</script>
+</body>
+</html>

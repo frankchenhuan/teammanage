@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--360浏览器优先以webkit内核解析-->
+    <title>个人信息</title>
+    <link rel="shortcut icon" href="/img/football.png" th:href="@{/img/football.png}"/>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/font-awesome.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/main/animate.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/main/style.min862f.css}" rel="stylesheet"/>
+</head>
+<body class="gray-bg">
+    <div class="wrapper wrapper-content">
+		<div class="row animated fadeInRight">
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        	<h5>我的信息</h5>
+                    </div>
+                    <div class="contact-box">
+                    		<div class="col-sm-6">
+	                            <div class="text-center">
+	                                <img alt="image" class="img-circle m-t-xs img-responsive" th:src="(${user.avatar} == '') ? @{/img/profile.jpg} : @{/profile/avatar/} + ${user.avatar}">
+	                            </div>
+	                        </div>
+	                        <div class="col-sm-6">
+	                        	<h4><strong>[[${user.userName}]]</strong></h4>
+	                            <p><i class="fa fa-cny"></i> 充值总额: [[${myinfo.amount}]]</p>
+	                            <p><i class="fa fa-cny"></i> 支出金额: [[${myinfo.amount-myinfo.balance}]]</p>
+	                            <p><i class="fa fa-cny"></i> 余额:[[${myinfo.balance}]] </p>
+	                            <p><i class="fa fa-soccer-ball-o"></i>总出勤:[[${myinfo.activityCount1}]] </p>
+	                            <p><i class="fa fa-soccer-ball-o"></i>最近出勤:[[${myinfo.activityCount2}]] </p>
+	                        </div>
+	                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="contact-box">
+                    	 <div id="activityUserLevel" style="width: 550px;height: 250px;"></div>
+                    </div>
+                    <div class="clearfix"></div>
+               </div>
+            </div>
+       </div>
+       <div class="row animated fadeInRight">
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>支出占比</h5>
+                    </div>
+                    <div class="contact-box">
+	                    	<div  id="cost_radio" style="width: 550px;height: 250px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>年度支出</h5>
+                    </div>
+                    <div class="contact-box">
+	                    	<div  id="yearExpenditure" style="width: 550px;height: 250px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+   	</div>
+    
+    <div th:include="include::footer"></div>
+    <div th:include="include::echarts"></div>
+    <script type="text/javascript">
+    var prefix = ctx + "team/userBalance";
+   	/**球队支出比例的请求**/
+    $.ajax({
+        type:'post',
+        dataType:'json',
+        url:prefix+'/chartData',
+        //data: {attendance_topnum:10},
+        success:function(data){
+        	//alert(data);
+        	 if(data!=null)
+        	{
+        			activityUserLevelChart(data.activtiyLevel);
+        			radioChart(data.userExpenditureRatio);
+        			yearExpenditure(data.yearExpenditure);
+        	}
+        	else{
+        		alert("数据读取失败");
+        	} 
+        }
+    });
+   	
+    /**活跃图图表**/
+    function activityUserLevelChart(data)
+    {
+    	//alert(data);
+    	if(data!=null)
+    	{
+	    	var dates = [];
+	        var levels = [];
+			for(var i=0;i<data.length;i++)
+	        {
+				dates.push(data[i].record_date);
+				levels.push(data[i].activity_level);
+	        }
+			initUserActivityLevelChart({
+				dates:dates,
+				levels:levels
+			});
+    	}else{
+    		//提示信息
+    	}
+    }
+    function initUserActivityLevelChart(data)
+    {
+    	var activityLevel = echarts.init(document.getElementById('activityUserLevel'),'vintage');
+    	option = {
+    		    visualMap: [{
+    		        show: false,
+    		        type: 'continuous',
+    		        seriesIndex: 0,
+    		        min: 0,
+    		        max: 100
+    		    }],
+    		    title: [{
+    		        left: 'center',
+    		        text: '我的活跃度'
+    		    }],
+    		    tooltip: {
+    		        trigger: 'axis'
+    		    },
+    		    xAxis: [{
+    		        data: data.dates
+    		    }],
+    		    yAxis: [{
+    		        splitLine: {show: true}
+    		    }],
+    		    grid: [{
+    		        bottom: 20,left:50,rigth:20
+    		    }],
+    		    series: [{
+    		        type: 'line',
+    		        showSymbol: false,
+    		        data: data.levels
+    		    }]
+    		};
+    	activityLevel.setOption(option);
+    }
+    
+    /**支出比例图表*/
+   	function radioChart(data)
+   	{
+    	//alert(data);
+   		if(data!=null)
+    	{
+    		var legendData = [];
+	        var seriesData = [];
+	        var selected = {};
+    		for(var i=0;i<data.length;i++)
+            {
+    			legendData.push(data[i].cost_name);
+                seriesData.push({
+                    name: data[i].cost_name,
+                    value: data[i].cost_amount
+                });
+                selected[data[i].cost_name] = true;
+            }
+    		//初始化球队支出比例图表
+    		initRadioChart({legendData: legendData,seriesData: seriesData,selected: selected});
+    	}else{
+    		//提示信息
+    	}
+   	}
+    /**初始化球队支出比例图表*/
+    function initRadioChart(data){
+    	//alert(data);
+        var cost_radio = echarts.init(document.getElementById('cost_radio'),'vintage');
+        var option = {
+            title : {
+                text: '费用支出占比',
+                subtext: '',
+                x:'center',
+                show:true
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: "{b} : {c} ({d}%)",
+                show:true
+            },
+            legend: {
+                type: 'scroll',
+                orient: 'vertical',
+                right: 50,
+                top: 20,
+                bottom: 20,
+                data: data.legendData,
+                show:true,
+                selected: data.selected
+            },
+            series : [
+                {
+                    name: '费用类型',
+                    type: 'pie',
+                    radius : '55%',
+                    center: ['40%', '50%'],
+                    data: data.seriesData,
+                    hoverAnimation:true,
+                    label:{
+                		show:true,
+                		formatter: "{b} : {c} ({d}%)"
+                	},
+                    itemStyle: {
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+        };
+        cost_radio.setOption(option);
+    }
+    
+    /**年支出图表**/
+    function yearExpenditure(data)
+    {
+    	if(data!=null)
+    	{
+	    	var years = [];
+	        var expenditureData = [];
+			for(var i=0;i<data.length;i++)
+	        {
+				years.push(data[i].yy);
+				expenditureData.push(data[i].amount);
+	        }
+			inityearExpenditure({
+				years:years,
+				expenditureData:expenditureData
+			});
+    	}else{
+    		//提示信息
+    	}
+    }
+    function inityearExpenditure(data)
+    {
+    	var yearExpenditure = echarts.init(document.getElementById('yearExpenditure'),'vintage');
+    	option = {
+    			title:{
+    				show:false,
+    				text:'年度费用支出'
+    			},
+    			tooltip:{
+    				show:true,
+    				trigger:'axis',
+    				axisPointer:{
+    					type:'line'
+    				}
+    			},
+    			grid:{top:40,left:40,bottom:20},
+    		    xAxis: {
+    		        type: 'category',
+    		        data: data.years,
+    		        axisLabel:{
+    		        	interval:0,
+    		        	alignWithLabel:true
+    		        }
+    		    },
+    		    yAxis: {
+    		        type: 'value'
+    		    },
+    		    series: [{
+    		        data: data.expenditureData,
+    		        type: 'bar',
+    		        label:{
+    		        	show:true
+    		        }
+    		    }]
+    		};
+    	yearExpenditure.setOption(option);
+    }
+   	</script>
+</body>
+</html>

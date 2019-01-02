@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.web.mapper.ActivityMapper">
+    
+    <resultMap type="Activity" id="ActivityResult">
+        <result property="id"    column="id"    />
+        <result property="activityName"    column="activity_name"    />
+        <result property="activityDate"    column="activity_date"    />
+        <result property="peopleNumber"    column="people_number"    />
+        <result property="remark"    column="remark"    />
+        <result property="activitySite"    column="activity_site"    />
+    </resultMap>
+	
+	<sql id="selectActivityVo">
+        select id, activity_name, activity_date, people_number, remark, activity_site from tm_activity
+    </sql>
+	
+    <select id="selectActivityList" parameterType="Activity" resultMap="ActivityResult">
+        <include refid="selectActivityVo"/>
+        <where>  
+            <if test="id != null "> and id = #{id}</if>
+             <if test="activityName != null  and activityName != '' "> and activity_name = #{activityName}</if>
+             <if test="activityDate != null "> and activity_date = #{activityDate}</if>
+             <if test="peopleNumber != null "> and people_number = #{peopleNumber}</if>
+             <if test="remark != null  and remark != '' "> and remark = #{remark}</if>
+             <if test="activitySite != null  and activitySite != '' "> and activity_site = #{activitySite}</if>
+         </where>
+         order by activity_date desc
+    </select>
+    
+    <select id="selectActivityById" parameterType="Long" resultMap="ActivityResult">
+        <include refid="selectActivityVo"/>
+        where id = #{id}
+    </select>
+    
+    <select id="selectActivityListTop" parameterType="Integer" resultMap="ActivityResult">
+        <include refid="selectActivityVo"/>
+         order by activity_date desc limit 0,#{top}
+    </select>
+        
+    <insert id="insertActivity" parameterType="Activity" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into tm_activity
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null  ">id,</if>
+			<if test="activityName != null  and activityName != ''  ">activity_name,</if>
+			<if test="activityDate != null  ">activity_date,</if>
+			<if test="peopleNumber != null  ">people_number,</if>
+			<if test="remark != null  and remark != ''  ">remark,</if>
+			<if test="activitySite != null  and activitySite != ''  ">activity_site,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null  ">#{id},</if>
+			<if test="activityName != null  and activityName != ''  ">#{activityName},</if>
+			<if test="activityDate != null  ">#{activityDate},</if>
+			<if test="peopleNumber != null  ">#{peopleNumber},</if>
+			<if test="remark != null  and remark != ''  ">#{remark},</if>
+			<if test="activitySite != null  and activitySite != ''  ">#{activitySite},</if>
+         </trim>
+         <selectKey resultType="Long" keyProperty="id" order="AFTER">
+        SELECT LAST_INSERT_ID()
+    	</selectKey>
+    </insert>
+    
+    <insert id="insertActivityUser" parameterType="map">
+        insert into tm_activity_user (activity_id,user_id)
+        values
+        <foreach collection="userids" item="item" index="index" separator=",">
+            (#{activityid}, #{item})
+        </foreach>
+    </insert>
+	 
+	  <delete id="deleteActivityUserByActivityid" parameterType="Long">
+        delete from tm_activity_user where activity_id = #{activityid}
+    </delete>
+    
+     <select id="selectActivityUserIDByActivityid" parameterType="Long" resultType="string">
+        select user_id from tm_activity_user where activity_id = #{activityid}
+    </select>
+    
+    <update id="updateActivity" parameterType="Activity">
+        update tm_activity
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="activityName != null  and activityName != ''  ">activity_name = #{activityName},</if>
+            <if test="activityDate != null  ">activity_date = #{activityDate},</if>
+            <if test="peopleNumber != null  ">people_number = #{peopleNumber},</if>
+            <if test="remark != null  and remark != ''  ">remark = #{remark},</if>
+            <if test="activitySite != null  and activitySite != ''  ">activity_site = #{activitySite},</if>
+        </trim>
+        where id = #{id}
+    </update>
+    
+   
+
+	<delete id="deleteActivityById" parameterType="Long">
+        delete from tm_activity where id = #{id}
+    </delete>
+	
+    <delete id="deleteActivityByIds" parameterType="String">
+        delete from tm_activity where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    
+</mapper>

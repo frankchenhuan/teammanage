@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.web.mapper.ExpenditureMapper">
+    
+    <resultMap type="Expenditure" id="ExpenditureResult">
+        <result property="id"    column="id"    />
+        <result property="costName"    column="cost_name"    />
+        <result property="costTypeId"    column="cost_type_id"    />
+        <result property="remarks"    column="remarks"    />
+        <result property="costAmount"    column="cost_amount"    />
+        <result property="writeOffAmount"    column="write_off_amount"    />
+        <result property="isWriteOff"    column="is_write_off"    />
+        <result property="activityId"    column="activity_id"    />
+        <result property="activityName"    column="activity_name"    />
+        <result property="expenditureTime"    column="expenditure_time"    />
+        <result property="costTypeName"    column="costTypeName"    />
+        
+    </resultMap>
+	
+	<sql id="selectExpenditureVo">
+       select t1.id, cost_name, cost_type_id, remarks, cost_amount, write_off_amount, is_write_off,t2.activity_name,t1.activity_id,t1.expenditure_time,type.dict_label costTypeName from tm_expenditure t1
+       inner join sys_dict_data type on type.dict_type='tm_cost_type' and type.dict_value=cost_type_id
+	   LEFT JOIN tm_activity t2 on t1.activity_id=t2.id
+    </sql>
+	
+    <select id="selectExpenditureList" parameterType="Expenditure" resultMap="ExpenditureResult">
+        <include refid="selectExpenditureVo"/>
+        <where>  
+            <if test="id != null "> and t1.id = #{id}</if>
+             <if test="costName != null  and costName != '' "> and cost_name = #{costName}</if>
+             <if test="costTypeId != null "> and cost_type_id = #{costTypeId}</if>
+             <if test="remarks != null  and remarks != '' "> and remarks = #{remarks}</if>
+             <if test="costAmount != null "> and cost_amount = #{costAmount}</if>
+             <if test="writeOffAmount != null "> and write_off_amount = #{writeOffAmount}</if>
+             <if test="isWriteOff != null "> and is_write_off = #{isWriteOff}</if>
+             <if test="activityId != null "> and t1.activity_id = #{activityId}</if>
+         </where>
+         order by is_write_off asc,t1.expenditure_time desc
+    </select>
+    
+    <select id="selectExpenditureById" parameterType="Long" resultMap="ExpenditureResult">
+        <include refid="selectExpenditureVo"/>
+        where t1.id = #{id}
+    </select>
+        
+    <insert id="insertExpenditure" parameterType="Expenditure">
+        insert into tm_expenditure
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null  ">id,</if>
+			<if test="costName != null  and costName != ''  ">cost_name,</if>
+			<if test="costTypeId != null  ">cost_type_id,</if>
+			<if test="remarks != null  and remarks != ''  ">remarks,</if>
+			<if test="costAmount != null  ">cost_amount,</if>
+			<if test="writeOffAmount != null  ">write_off_amount,</if>
+			<if test="isWriteOff != null  ">is_write_off,</if>
+			<if test="activityId != null  ">activity_id,</if>
+			<if test="expenditureTime != null  ">expenditure_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null  ">#{id},</if>
+			<if test="costName != null  and costName != ''  ">#{costName},</if>
+			<if test="costTypeId != null  ">#{costTypeId},</if>
+			<if test="remarks != null  and remarks != ''  ">#{remarks},</if>
+			<if test="costAmount != null  ">#{costAmount},</if>
+			<if test="writeOffAmount != null  ">#{writeOffAmount},</if>
+			<if test="isWriteOff != null  ">#{isWriteOff},</if>
+			<if test="activityId != null  ">#{activityId},</if>
+			<if test="expenditureTime != null  ">#{expenditureTime},</if>
+         </trim>
+    </insert>
+	 
+    <update id="updateExpenditure" parameterType="Expenditure">
+        update tm_expenditure
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="costName != null  and costName != ''  ">cost_name = #{costName},</if>
+            <if test="costTypeId != null  ">cost_type_id = #{costTypeId},</if>
+            <if test="remarks != null  and remarks != ''  ">remarks = #{remarks},</if>
+            <if test="costAmount != null  ">cost_amount = #{costAmount},</if>
+            <if test="writeOffAmount != null  ">write_off_amount = #{writeOffAmount},</if>
+            <if test="isWriteOff != null  ">is_write_off = #{isWriteOff},</if>
+            <if test="activityId != null  ">activity_id = #{activityId},</if>
+            <if test="expenditureTime != null  ">expenditure_time = #{expenditureTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+    
+     <update id="updateExpenditureWriteOffAmount" parameterType="Expenditure">
+        update tm_expenditure
+        <trim prefix="SET" suffixOverrides=",">
+             <if test="writeOffAmount != null  ">is_write_off = case when write_off_amount+#{writeOffAmount}>=cost_amount then 1 else 0 end,</if>
+            <if test="writeOffAmount != null  ">write_off_amount = write_off_amount+#{writeOffAmount},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+	<delete id="deleteExpenditureById" parameterType="Long">
+        delete from tm_expenditure where id = #{id}
+    </delete>
+	
+    <delete id="deleteExpenditureByIds" parameterType="String">
+        delete from tm_expenditure where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    
+</mapper>
